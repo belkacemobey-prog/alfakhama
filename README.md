@@ -1,36 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ElectroTunisie 🇹🇳⚡
 
-## Getting Started
+Production-ready e-commerce platform for the Tunisian home appliances market.
 
-First, run the development server:
+**Stack:** Next.js 14 (App Router) · TypeScript · Supabase · Tailwind CSS · Framer Motion · Recharts · Zustand
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## 🚀 Quick Start
+
+### 1. Create a Supabase Project
+Go to [supabase.com](https://supabase.com), create a new project, then run the migration:
+```sql
+-- Copy/paste the full contents of supabase/schema.sql into the SQL editor
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Configure Environment Variables
+Copy `.env.local` and fill in your Supabase credentials:
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Create Admin User
+In Supabase Dashboard → Authentication → Users → Add User, create an admin user with email/password.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 4. Run Development Server
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
+Open [http://localhost:3000](http://localhost:3000)
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📁 Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+electrotunisie/
+├── app/
+│   ├── (store)/          # Public store pages
+│   │   ├── page.tsx      # Homepage
+│   │   ├── products/     # Product listing + detail
+│   │   ├── cart/
+│   │   ├── checkout/     # Checkout with governorate carousel
+│   │   └── order-confirmation/[id]/
+│   ├── admin/            # Protected admin panel
+│   │   ├── page.tsx      # Dashboard with KPIs + charts
+│   │   ├── orders/       # Orders management
+│   │   ├── products/     # Products CRUD
+│   │   ├── categories/   # Categories CRUD
+│   │   ├── banners/      # Hero banners CRUD
+│   │   ├── analytics/    # Charts + reports
+│   │   └── settings/     # Store configuration
+│   └── api/              # REST API routes
+├── components/
+│   ├── store/            # Store UI components
+│   └── admin/            # Admin UI components
+├── lib/
+│   ├── supabase.ts       # Browser Supabase client
+│   ├── supabase-server.ts # Server Supabase client
+│   ├── cart-store.ts     # Zustand cart state
+│   └── utils.ts          # Helpers, constants
+└── supabase/
+    └── schema.sql        # Full DB schema + seed data
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## ✨ Features
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Store
+- 🛍️ Full product catalog with filtering by category, brand, search
+- 🎠 Hero carousel from Supabase banners (admin-editable)
+- 🛒 Persistent cart with Zustand + localStorage
+- 🗺️ Governorate carousel — all 24 Tunisian governorates
+- 💵 Cash on delivery — no login required to order
+- 📦 Order tracking with visual status stepper
+- 📱 Fully responsive (mobile-first)
+- 🔍 Debounced search with live dropdown
+- ⭐ Product ratings, stock indicators, discount badges
+- 🖼️ Image zoom on product detail
+- 💬 WhatsApp floating button with pre-filled message
+
+### Admin Panel (`/admin`)
+- 🔐 Supabase Auth (email/password)
+- 📊 Dashboard with KPI cards + Recharts charts
+- 📋 Orders list with filters, search, CSV export
+- 📝 Order detail with status timeline + WhatsApp link
+- 📦 Products CRUD with image URL management
+- 🏷️ Categories CRUD
+- 🖼️ Banners CRUD (hero carousel)
+- 📈 Analytics with charts by day/week/governorate
+- ⚙️ Store settings (name, phone, delivery fee, etc.)
+
+---
+
+## 🗄️ Database
+
+All 24 Tunisian governorates pre-seeded. Sample data includes:
+- 10 product categories with Arabic names
+- 30+ products with realistic DT prices
+- 3 hero banners
+- 10 sample orders across different governorates
+
+---
+
+## 🎨 Design System
+
+| Token | Value |
+|-------|-------|
+| Primary | `#E63946` (Tunisian red) |
+| Secondary | `#1D3557` (Deep navy) |
+| Accent | `#F4A261` (Warm amber) |
+| Success | `#2D6A4F` |
+
+---
+
+## 📝 Supabase Storage (for image uploads)
+
+To enable image uploads in the admin, create a storage bucket called `products` in Supabase Dashboard → Storage, and add a public policy for uploads.
+
+---
+
+## 🔒 Row Level Security
+
+- Public: read products, categories, banners, governorates, settings
+- Public: insert orders + order_items (no auth required for customers)
+- Admin: full access via service role key
+
+---
+
+Made with ❤️ for Tunisia 🇹🇳

@@ -1,19 +1,83 @@
-import type { Config } from "tailwindcss";
+import type { Config } from 'tailwindcss'
 
 const config: Config = {
+  darkMode: ['class'],
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
+        primary: {
+          DEFAULT: '#00C2CB',
+          dark: '#00A8B0',
+          /** Text on cyan buttons / badges */
+          foreground: '#03080F',
+          light: '#33D6DE',
+        },
+        secondary: {
+          DEFAULT: '#1D3557',
+          light: '#457B9D',
+          foreground: '#FFFFFF',
+        },
+        accent: {
+          DEFAULT: '#00C2CB',
+          dark: '#00A8B0',
+        },
+        success: '#2D6A4F',
+        background: '#070D1A',
+        surface: '#0D1628',
+        muted: {
+          DEFAULT: '#0A1220',
+          foreground: '#8A9BB8',
+        },
+        border: '#1A2840',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      borderRadius: {
+        DEFAULT: '0.5rem',
+        xl: '0.75rem',
+        '2xl': '1rem',
+        '3xl': '1.5rem',
+      },
+      boxShadow: {
+        card: '0 2px 8px rgba(0,0,0,0.35)',
+        'card-hover': '0 8px 24px rgba(0,194,203,0.12)',
+        glow: '0 0 20px rgba(0,194,203,0.35)',
+      },
+      animation: {
+        'fade-in': 'fadeIn 0.3s ease-in-out',
+        'slide-up': 'slideUp 0.4s ease-out',
+        'slide-in-right': 'slideInRight 0.3s ease-out',
+        pulse: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'bounce-slow': 'bounce 3s infinite',
+        shimmer: 'shimmer 1.5s infinite',
+      },
+      keyframes: {
+        fadeIn: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        slideUp: {
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
+          '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideInRight: {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
       },
     },
   },
   plugins: [],
-};
-export default config;
+}
+
+export default config
