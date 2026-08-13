@@ -33,23 +33,29 @@ export default function CheckoutPage() {
   const total = subtotal + deliveryFee
 
   useEffect(() => {
-    supabase
-      .from('governorates')
-      .select('*')
-      .order('id', { ascending: true })
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('[checkout] governorates:', error.message)
-          toast.error(t('checkout.err.govLoad'))
-          setGovernorates([])
-          return
-        }
-        const rows = (data as Governorate[]) || []
-        setGovernorates(rows)
-        if (rows.length > 0 && rows.length < 24) {
-          console.warn('[checkout] governorates:', rows.length, 'rows (expected 24 — run supabase/schema.sql inserts)')
-        }
-      })
+    let cancelled = false
+    async function loadGovernorates() {
+      const { data, error } = await supabase
+        .from('governorates')
+        .select('*')
+        .order('id', { ascending: true })
+      if (cancelled) return
+      if (error) {
+        console.error('[checkout] governorates:', error.message)
+        toast.error(t('checkout.err.govLoad'))
+        setGovernorates([])
+        return
+      }
+      const rows = (data as Governorate[]) || []
+      setGovernorates(rows)
+      if (rows.length > 0 && rows.length < 24) {
+        console.warn('[checkout] governorates:', rows.length, 'rows (expected 24 — run supabase/schema.sql inserts)')
+      }
+    }
+    loadGovernorates()
+    return () => {
+      cancelled = true
+    }
   }, [t])
 
   if (items.length === 0) {
