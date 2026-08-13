@@ -96,7 +96,7 @@ export default function AdminSettingsPage() {
 
       const map: Record<string, string> = {}
       const secrets: Record<string, boolean> = {}
-      data?.forEach(row => {
+      data?.forEach((row: { key: string; value: string | null }) => {
         map[row.key] = row.value || ''
         if (row.key === 'supabase_service_role_key' && row.value) {
           map[row.key] = SECRET_SETTING_PLACEHOLDER
@@ -195,7 +195,10 @@ export default function AdminSettingsPage() {
           </p>
         </div>
 
-        {INTEGRATION_FIELDS.map(({ key, label, icon: Icon, placeholder, type, hint, secret }) => (
+        {INTEGRATION_FIELDS.map(field => {
+          const { key, label, icon: Icon, placeholder, type, hint } = field
+          const secret = 'secret' in field && Boolean(field.secret)
+          return (
           <div key={key}>
             <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
               <Icon className="w-4 h-4 text-primary" />
@@ -215,7 +218,8 @@ export default function AdminSettingsPage() {
             />
             {hint ? <p className="text-xs text-gray-500 mt-1">{hint}</p> : null}
           </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800">
