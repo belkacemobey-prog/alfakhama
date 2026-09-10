@@ -12,19 +12,32 @@ import { fetchSettings } from '@/lib/site-settings-server'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = {
-  title: {
-    default: 'AL FAKHAMA STORE — Boutique Premium en Tunisie',
-    template: '%s | AL FAKHAMA STORE',
-  },
-  description:
-    'AL FAKHAMA STORE — électroménager et équipements de qualité en Tunisie. Livraison partout, paiement à la livraison.',
-  keywords: 'al fakhama, store, électroménager, tunisie, luxe, réfrigérateur, TV, climatiseur',
-  openGraph: {
-    type: 'website',
-    locale: 'fr_TN',
-    siteName: 'AL FAKHAMA STORE',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await fetchSettings(INTEGRATION_SETTING_KEYS)
+  const domainVerification = resolveDomainVerification(settings)
+
+  return {
+    title: {
+      default: 'AL FAKHAMA STORE — Boutique Premium en Tunisie',
+      template: '%s | AL FAKHAMA STORE',
+    },
+    description:
+      'AL FAKHAMA STORE — électroménager et équipements de qualité en Tunisie. Livraison partout, paiement à la livraison.',
+    keywords: 'al fakhama, store, électroménager, tunisie, luxe, réfrigérateur, TV, climatiseur',
+    openGraph: {
+      type: 'website',
+      locale: 'fr_TN',
+      siteName: 'AL FAKHAMA STORE',
+    },
+    // Required for Meta Business domain verification (must appear in <head> of production domain)
+    ...(domainVerification
+      ? {
+          other: {
+            'facebook-domain-verification': domainVerification,
+          },
+        }
+      : {}),
+  }
 }
 
 export default async function RootLayout({
@@ -34,7 +47,6 @@ export default async function RootLayout({
 }) {
   const settings = await fetchSettings(INTEGRATION_SETTING_KEYS)
   const fbPixelId = resolveFacebookPixelId(settings)
-  const domainVerification = resolveDomainVerification(settings)
 
   return (
     <html lang="fr">
@@ -43,9 +55,6 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
-        {domainVerification ? (
-          <meta name="facebook-domain-verification" content={domainVerification} />
-        ) : null}
       </head>
       <body>
         <SupabaseProvider>

@@ -52,8 +52,23 @@ export function resolveMetaCapiAccessToken(settings: SiteSettings): string {
   return settings.meta_capi_access_token || process.env.META_CAPI_ACCESS_TOKEN || ''
 }
 
+export function sanitizeDomainVerificationContent(raw: string | null | undefined): string {
+  if (!raw) return ''
+  let value = raw.trim()
+  // User pasted full meta tag: <meta name="facebook-domain-verification" content="TOKEN" />
+  const contentMatch = value.match(/content\s*=\s*["']([^"']+)["']/i)
+  if (contentMatch?.[1]) value = contentMatch[1].trim()
+  // Strip leftover markup / quotes
+  value = value.replace(/^<[^>]+>/, '').replace(/<\/?meta[^>]*>/gi, '').replace(/^["']|["']$/g, '').trim()
+  return value
+}
+
 export function resolveDomainVerification(settings: SiteSettings): string {
-  return settings.domain_verification_content || ''
+  return (
+    sanitizeDomainVerificationContent(settings.domain_verification_content) ||
+    sanitizeDomainVerificationContent(process.env.NEXT_PUBLIC_FACEBOOK_DOMAIN_VERIFICATION) ||
+    ''
+  )
 }
 
 export const SECRET_SETTING_PLACEHOLDER = '••••••••••••'

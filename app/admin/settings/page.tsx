@@ -21,6 +21,7 @@ import {
   SECRET_SETTING_PLACEHOLDER,
   STORE_SETTING_KEYS,
   isSecretPlaceholder,
+  sanitizeDomainVerificationContent,
 } from '@/lib/site-settings'
 
 const STORE_FIELDS = [
@@ -56,7 +57,7 @@ const INTEGRATION_FIELDS = [
     icon: Globe,
     placeholder: 'abc123xyz...',
     type: 'text',
-    hint: 'Contenu de la balise meta facebook-domain-verification',
+    hint: 'Uniquement le code content=… — domaine en production (pas localhost)',
   },
 ] as const
 
@@ -102,11 +103,17 @@ export default function AdminSettingsPage() {
         if (secretFieldsSet[key] && isSecretPlaceholder(value)) return false
         return true
       })
-      .map(key => ({
-        key,
-        value: settings[key] ?? '',
-        updated_at: new Date().toISOString(),
-      }))
+      .map(key => {
+        let value = settings[key] ?? ''
+        if (key === 'domain_verification_content') {
+          value = sanitizeDomainVerificationContent(value)
+        }
+        return {
+          key,
+          value,
+          updated_at: new Date().toISOString(),
+        }
+      })
 
     const { error } = await supabase.from('settings').upsert(updates)
     if (error) {
@@ -114,6 +121,14 @@ export default function AdminSettingsPage() {
       setSaving(false)
       return
     }
+
+    // Keep local state cleaned
+    setSettings(prev => ({
+      ...prev,
+      domain_verification_content: sanitizeDomainVerificationContent(
+        prev.domain_verification_content
+      ),
+    }))
 
     toast.success('Paramètres sauvegardés !')
     setSaving(false)
@@ -198,12 +213,25 @@ export default function AdminSettingsPage() {
         })}
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-sm text-blue-700">
-        <p className="font-semibold mb-1">Vérification de domaine</p>
-        <p>
-          Copiez uniquement la valeur <strong>content</strong> de la balise Meta, par exemple{' '}
-          <code className="text-xs">abc123xyz</code> — pas la balise HTML complète.
-        </p>
+      <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-sm text-blue-700 space-y-2">
+        <p className="font-semibold">Vérification de domaine Meta</p>
+        <ol className="list-decimal list-inside space-y-1 text-blue-800/90">
+          <li>
+            Dans Meta Business, choisissez la méthode <strong>Balise meta</strong>.
+          </li>
+          <li>
+            Collez ici uniquement le code <code className="text-xs bg-white/60 px-1 rounded">content</code>,
+            ex. <code className="text-xs bg-white/60 px-1 rounded">a1b2c3d4e5…</code> — pas toute la balise HTML.
+          </li>
+          <li>Sauvegardez, puis déployez le site sur le domaine exact à vérifier (ex. www.votredomaine.tn).</li>
+          <li>
+            Vérifiez dans le code source de la page d&apos;accueil :
+            <code className="block text-xs mt-1 bg-white/60 px-2 py-1 rounded break-all">
+              {'<meta name="facebook-domain-verification" content="…">'}
+            </code>
+          </li>
+          <li>Cliquez sur Vérifier dans Meta (localhost ne fonctionne pas).</li>
+        </ol>
       </div>
 
       <button
