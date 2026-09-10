@@ -1,10 +1,13 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { formatPrice } from '@/lib/utils'
-import { Plus, Edit2, Eye, EyeOff, Package } from 'lucide-react'
+import { Plus, Edit2, Eye, EyeOff, Package, Trash2, Loader2 } from 'lucide-react'
 import type { Product } from '@/lib/supabase'
 import { useAdminLanguage } from '@/components/admin/AdminLanguageProvider'
+import { toast } from 'sonner'
 
 function buildProductsQuery(search: { search?: string; category?: string }) {
   const p = new URLSearchParams()
@@ -27,6 +30,8 @@ export default function AdminProductsClient({
   searchParams: { search?: string; category?: string }
 }) {
   const { t } = useAdminLanguage()
+  const router = useRouter()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
   const qs = buildProductsQuery(searchParams)
 
   const pageHref = (p: number) => {
@@ -34,6 +39,28 @@ export default function AdminProductsClient({
     params.set('page', String(p))
     const s = params.toString()
     return s ? `/admin/products?${s}` : `/admin/products?page=${p}`
+  }
+
+  const handleDelete = async (product: Product) => {
+    const ok = window.confirm(t('products.deleteConfirm', { name: product.name }))
+    if (!ok) return
+
+    setDeletingId(product.id)
+    try {
+      const res = await fetch(`/api/admin/products/${product.id}`, { method: 'DELETE' })
+      const body = (await res.json().catch(() => ({}))) as { error?: string }
+      if (!res.ok) {
+        toast.error(body.error || t('products.deleteError'))
+        return
+      }
+      toast.success(t('products.deleteSuccess'))
+      router.refresh()
+    } catch (err) {
+      console.error('[admin products delete]', err)
+      toast.error(t('products.deleteError'))
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   return (
@@ -152,12 +179,29 @@ export default function AdminProductsClient({
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/admin/products/${product.id}/edit`}
-                        className="p-1.5 hover:bg-primary/10 rounded-lg transition-colors text-primary inline-flex"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </Link>
+                      <div className="flex items-center gap-1">
+                        <Link
+                          href={`/admin/products/${product.id}/edit`}
+                          className="p-1.5 hover:bg-primary/10 rounded-lg transition-colors text-primary inline-flex"
+                          title={t('products.page.editTitle', { name: product.name })}
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(product)}
+                          disabled={deletingId === product.id}
+                          className="p-1.5 hover:bg-red-50 rounded-lg transition-colors text-red-500 inline-flex disabled:opacity-50"
+                          title={t('products.delete')}
+                          aria-label={t('products.delete')}
+                        >
+                          {deletingId === product.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))

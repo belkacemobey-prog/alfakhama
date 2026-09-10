@@ -70,6 +70,11 @@ export type Database = {
   }
 }
 
+export interface ProductOptionGroup {
+  name: string
+  values: string[]
+}
+
 export interface Product {
   id: string
   name: string
@@ -82,6 +87,8 @@ export interface Product {
   brand: string | null
   stock: number
   images: string[]
+  delivery_fee: number
+  options: ProductOptionGroup[]
   is_featured: boolean
   is_active: boolean
   rating: number
@@ -134,6 +141,7 @@ export interface OrderItem {
   quantity: number
   unit_price: number
   total_price: number
+  selected_options: Record<string, string> | null
 }
 
 export interface Banner {

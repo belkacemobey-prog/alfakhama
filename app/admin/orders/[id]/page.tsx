@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic'
 import { createClient } from '@/lib/supabase-server'
 import { formatPrice, formatDate, ORDER_STATUSES } from '@/lib/utils'
+import { formatSelectedOptions } from '@/lib/product-options'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, MessageCircle, MapPin, Phone, Package, Truck, XCircle, Settings } from 'lucide-react'
@@ -150,6 +151,11 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 line-clamp-2">{item.product_name}</p>
+                  {formatSelectedOptions(item.selected_options) ? (
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {formatSelectedOptions(item.selected_options)}
+                    </p>
+                  ) : null}
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-xs text-gray-400">{formatPrice(item.unit_price)} × {item.quantity}</span>
                     <span className="text-sm font-bold text-primary">{formatPrice(item.total_price)}</span>

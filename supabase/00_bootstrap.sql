@@ -20,6 +20,8 @@ create table if not exists products (
   brand text,
   stock integer default 0,
   images text[] default '{}',
+  delivery_fee decimal(10,2) default 7.000,
+  options jsonb default '[]'::jsonb,
   is_featured boolean default false,
   is_active boolean default true,
   rating decimal(2,1) default 0,
@@ -66,12 +68,13 @@ create table if not exists orders (
 create table if not exists order_items (
   id uuid primary key default gen_random_uuid(),
   order_id uuid references orders(id) on delete cascade,
-  product_id uuid references products(id),
+  product_id uuid references products(id) on delete set null,
   product_name text not null,
   product_image text,
   quantity integer not null,
   unit_price decimal(10,2) not null,
-  total_price decimal(10,2) not null
+  total_price decimal(10,2) not null,
+  selected_options jsonb default '{}'::jsonb
 );
 
 create table if not exists admin_users (
@@ -142,6 +145,7 @@ insert into settings (key, value, updated_at) values
 ('store_phone', '+21671000000', now()),
 ('store_address', 'Tunis, Tunisie', now()),
 ('facebook_pixel_id', '', now()),
+('meta_capi_access_token', '', now()),
 ('domain_verification_content', '', now()),
 ('supabase_url', '', now()),
 ('supabase_anon_key', '', now()),
@@ -233,6 +237,7 @@ do $$ begin
   drop policy if exists "Public can insert order_items" on order_items;
   drop policy if exists "Public can read order_items by order" on order_items;
   drop policy if exists "Admins can delete order_items" on order_items;
+  drop policy if exists "Admins can update order_items" on order_items;
   -- settings
   drop policy if exists "Public can read settings" on settings;
   drop policy if exists "Public can read public settings" on settings;
@@ -324,6 +329,9 @@ create policy "Admins can delete orders" on orders
 
 create policy "Admins can delete order_items" on order_items
   for delete using (exists (select 1 from admin_users where id = auth.uid()));
+
+create policy "Admins can update order_items" on order_items
+  for update using (exists (select 1 from admin_users where id = auth.uid()));
 
 create policy "Admins can read all settings" on settings
   for select using (exists (select 1 from admin_users where id = auth.uid()));

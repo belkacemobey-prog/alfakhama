@@ -6,6 +6,7 @@ import { BRANDS, CATEGORIES } from '@/lib/utils'
 import { categoryDisplayName } from '@/lib/store-i18n'
 import { useStoreLanguage } from '@/components/store/StoreLanguageProvider'
 import BrandLogo from '@/components/store/BrandLogo'
+import { formatPhoneDisplay, telHref } from '@/lib/phone'
 
 const FOOTER_SLUGS = [
   'refrigerateurs',
@@ -15,8 +16,20 @@ const FOOTER_SLUGS = [
   'cuisinieres',
 ] as const
 
-export default function Footer() {
+export default function Footer({
+  storePhone,
+  storeAddress,
+}: {
+  storePhone?: string
+  storeAddress?: string
+}) {
   const { t, locale } = useStoreLanguage()
+  const phoneLabel = formatPhoneDisplay(storePhone)
+  const phoneLink = telHref(storePhone)
+  const addressLines = (storeAddress || '')
+    .split(/[\n,]/)
+    .map(s => s.trim())
+    .filter(Boolean)
 
   const footerCategories = FOOTER_SLUGS.map(slug => CATEGORIES.find(c => c.slug === slug)).filter(
     Boolean
@@ -125,19 +138,32 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-3 text-[var(--text-secondary)] text-sm">
                 <Phone className="w-4 h-4 mt-0.5 text-[var(--cyan)] flex-shrink-0" />
-                <span>+216 71 000 000</span>
+                <a href={phoneLink} className="hover:text-[var(--cyan)] transition-colors">
+                  {phoneLabel}
+                </a>
               </li>
               <li className="flex items-start gap-3 text-[var(--text-secondary)] text-sm">
                 <MapPin className="w-4 h-4 mt-0.5 text-[var(--cyan)] flex-shrink-0" />
                 <span>
-                  {t('footer.address1')}
-                  <br />
-                  {t('footer.address2')}
+                  {addressLines.length > 0 ? (
+                    addressLines.map((line, i) => (
+                      <span key={`${line}-${i}`}>
+                        {line}
+                        {i < addressLines.length - 1 ? <br /> : null}
+                      </span>
+                    ))
+                  ) : (
+                    <>
+                      {t('footer.address1')}
+                      <br />
+                      {t('footer.address2')}
+                    </>
+                  )}
                 </span>
               </li>
               <li className="flex items-start gap-3 text-[var(--text-secondary)] text-sm">
                 <Mail className="w-4 h-4 mt-0.5 text-[var(--cyan)] flex-shrink-0" />
-                <span>contact@electrotunisie.tn</span>
+                <span>contact@alfakhama.tn</span>
               </li>
             </ul>
           </div>

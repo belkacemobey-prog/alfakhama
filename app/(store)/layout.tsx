@@ -6,6 +6,8 @@ import Footer from '@/components/store/Footer'
 import CartDrawer from '@/components/store/CartDrawer'
 import WhatsAppButton from '@/components/store/WhatsAppButton'
 import { StoreLanguageProvider } from '@/components/store/StoreLanguageProvider'
+import { fetchSettings } from '@/lib/site-settings-server'
+import { DEFAULT_STORE_PHONE, DEFAULT_WHATSAPP } from '@/lib/phone'
 
 function NavbarFallback() {
   return (
@@ -16,21 +18,37 @@ function NavbarFallback() {
   )
 }
 
-export default function StoreLayout({
+export default async function StoreLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const settings = await fetchSettings([
+    'store_name',
+    'store_phone',
+    'store_address',
+    'whatsapp_number',
+  ])
+
+  const storePhone = settings.store_phone || process.env.NEXT_PUBLIC_STORE_PHONE || DEFAULT_STORE_PHONE
+  const whatsappNumber =
+    settings.whatsapp_number ||
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ||
+    storePhone ||
+    DEFAULT_WHATSAPP
+  const storeAddress = settings.store_address || ''
+  const storeName = settings.store_name || 'AL FAKHAMA STORE'
+
   return (
     <StoreLanguageProvider>
       <div className="flex flex-col min-h-screen">
         <Suspense fallback={<NavbarFallback />}>
-          <Navbar />
+          <Navbar storePhone={storePhone} />
         </Suspense>
         <main className="flex-1">{children}</main>
-        <Footer />
+        <Footer storePhone={storePhone} storeAddress={storeAddress} />
         <CartDrawer />
-        <WhatsAppButton />
+        <WhatsAppButton phone={whatsappNumber} storeName={storeName} />
       </div>
     </StoreLanguageProvider>
   )

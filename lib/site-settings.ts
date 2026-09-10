@@ -8,10 +8,8 @@ export const STORE_SETTING_KEYS = [
 ] as const
 
 export const INTEGRATION_SETTING_KEYS = [
-  'supabase_url',
-  'supabase_anon_key',
-  'supabase_service_role_key',
   'facebook_pixel_id',
+  'meta_capi_access_token',
   'domain_verification_content',
 ] as const
 
@@ -48,6 +46,10 @@ export function resolveSupabaseServiceRoleKey(settings: SiteSettings): string {
 
 export function resolveFacebookPixelId(settings: SiteSettings): string {
   return settings.facebook_pixel_id || process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || ''
+}
+
+export function resolveMetaCapiAccessToken(settings: SiteSettings): string {
+  return settings.meta_capi_access_token || process.env.META_CAPI_ACCESS_TOKEN || ''
 }
 
 export function resolveDomainVerification(settings: SiteSettings): string {

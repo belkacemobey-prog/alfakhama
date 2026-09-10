@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_price: item.unit_price * item.quantity,
+        selected_options: item.selected_options || {},
       }))
     )
 

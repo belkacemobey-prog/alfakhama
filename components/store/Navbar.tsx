@@ -12,6 +12,7 @@ import { useStoreLanguage } from '@/components/store/StoreLanguageProvider'
 import LanguageToggle from '@/components/store/LanguageToggle'
 import BrandLogo from '@/components/store/BrandLogo'
 import { motion, AnimatePresence } from 'framer-motion'
+import { formatPhoneDisplay, telHref } from '@/lib/phone'
 
 function isNavLinkActive(
   pathname: string,
@@ -42,7 +43,7 @@ function isNavLinkActive(
   return match
 }
 
-export default function Navbar() {
+export default function Navbar({ storePhone }: { storePhone?: string }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const { locale, t } = useStoreLanguage()
@@ -53,6 +54,8 @@ export default function Navbar() {
   const [showSearch, setShowSearch] = useState(false)
   const searchRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+  const phoneLabel = formatPhoneDisplay(storePhone)
+  const phoneLink = telHref(storePhone)
 
   const navLinks = useMemo(() => {
     const catHref = (nameFr: string) =>
@@ -128,7 +131,9 @@ export default function Navbar() {
         <span className="mx-4 hidden sm:inline opacity-50">|</span>
         <span className="hidden sm:inline">
           <Phone className="inline w-3 h-3 mr-1 text-[var(--cyan)]" />
-          +216 71 000 000
+          <a href={phoneLink} className="hover:text-[var(--cyan)] transition-colors">
+            {phoneLabel}
+          </a>
         </span>
       </div>
 

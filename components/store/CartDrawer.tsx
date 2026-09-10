@@ -2,6 +2,12 @@
 
 import { useCartStore } from '@/lib/cart-store'
 import { formatPrice } from '@/lib/utils'
+import {
+  calcCartDeliveryFee,
+  cartLineKey,
+  formatSelectedOptions,
+  FREE_DELIVERY_THRESHOLD,
+} from '@/lib/product-options'
 import { X, ShoppingCart, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
@@ -13,7 +19,7 @@ export default function CartDrawer() {
   const { locale, t } = useStoreLanguage()
 
   const subtotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0)
-  const deliveryFee = subtotal >= 500 ? 0 : 7
+  const deliveryFee = calcCartDeliveryFee(items, subtotal)
   const total = subtotal + deliveryFee
 
   return (
@@ -65,9 +71,12 @@ export default function CartDrawer() {
                   </Link>
                 </div>
               ) : (
-                items.map(item => (
+                items.map(item => {
+                  const lineKey = cartLineKey(item.product.id, item.selectedOptions)
+                  const optsLabel = formatSelectedOptions(item.selectedOptions)
+                  return (
                   <motion.div
-                    key={item.product.id}
+                    key={lineKey}
                     layout
                     exit={{ opacity: 0, x: 50 }}
                     className="flex gap-3 bg-[var(--bg-card)] border border-[var(--border-card)] rounded-xl p-3"
@@ -90,13 +99,16 @@ export default function CartDrawer() {
                       <p className="text-sm font-semibold text-[var(--text-primary)] line-clamp-2 leading-tight">
                         {productDisplayName(item.product, locale)}
                       </p>
+                      {optsLabel ? (
+                        <p className="text-xs text-[var(--text-secondary)] mt-0.5">{optsLabel}</p>
+                      ) : null}
                       <p className="text-[var(--cyan)] font-bold text-sm mt-1">{formatPrice(item.product.price)}</p>
 
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => updateQuantity(item.product.id, item.quantity - 1)}
+                            onClick={() => updateQuantity(lineKey, item.quantity - 1)}
                             className="w-6 h-6 rounded-lg bg-[var(--bg-input)] border border-[var(--border-card)] flex items-center justify-center text-[var(--text-primary)] hover:border-[var(--cyan)] transition-colors"
                           >
                             <Minus className="w-3 h-3" />
@@ -106,7 +118,7 @@ export default function CartDrawer() {
                           </span>
                           <button
                             type="button"
-                            onClick={() => updateQuantity(item.product.id, item.quantity + 1)}
+                            onClick={() => updateQuantity(lineKey, item.quantity + 1)}
                             className="w-6 h-6 rounded-lg bg-[var(--bg-input)] border border-[var(--border-card)] flex items-center justify-center text-[var(--text-primary)] hover:border-[var(--cyan)] transition-colors"
                           >
                             <Plus className="w-3 h-3" />
@@ -114,7 +126,7 @@ export default function CartDrawer() {
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeItem(item.product.id)}
+                          onClick={() => removeItem(lineKey)}
                           className="p-1 hover:text-[var(--cyan)] text-[var(--text-secondary)] transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -122,7 +134,8 @@ export default function CartDrawer() {
                       </div>
                     </div>
                   </motion.div>
-                ))
+                  )
+                })
               )}
             </div>
 
@@ -139,9 +152,11 @@ export default function CartDrawer() {
                       {deliveryFee === 0 ? t('cart.gratis') : formatPrice(deliveryFee)}
                     </span>
                   </div>
-                  {deliveryFee > 0 && (
+                  {deliveryFee > 0 && subtotal < FREE_DELIVERY_THRESHOLD && (
                     <p className="text-xs text-[var(--text-secondary)]">
-                      {t('cart.freeShippingHint', { amount: formatPrice(500 - subtotal) })}
+                      {t('cart.freeShippingHint', {
+                        amount: formatPrice(FREE_DELIVERY_THRESHOLD - subtotal),
+                      })}
                     </p>
                   )}
                   <div className="flex justify-between font-bold text-base pt-2 border-t border-[var(--border-card)]">

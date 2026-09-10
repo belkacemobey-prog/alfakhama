@@ -1,15 +1,14 @@
--- Integration settings (Facebook Pixel, domain verification, Supabase config)
+-- Integration settings (Meta Pixel, Conversions API, domain verification)
 -- Run this in Supabase SQL Editor on an existing project.
 
 insert into settings (key, value, updated_at) values
   ('facebook_pixel_id', '', now()),
-  ('domain_verification_content', '', now()),
-  ('supabase_url', '', now()),
-  ('supabase_anon_key', '', now()),
-  ('supabase_service_role_key', '', now())
+  ('meta_capi_access_token', '', now()),
+  ('domain_verification_content', '', now())
 on conflict (key) do nothing;
 
 drop policy if exists "Public can read settings" on settings;
+drop policy if exists "Public can read public settings" on settings;
 
 create policy "Public can read public settings" on settings
   for select using (

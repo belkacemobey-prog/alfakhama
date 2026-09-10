@@ -2,12 +2,14 @@
 
 import { Product } from '@/lib/supabase'
 import { formatPrice, getDiscountPercent, CATEGORIES } from '@/lib/utils'
+import { optionsLabel } from '@/lib/product-options'
 import { useCartStore } from '@/lib/cart-store'
 import { ShoppingCart, Star, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useStoreLanguage } from '@/components/store/StoreLanguageProvider'
 import { categoryDisplayName, productDisplayName, stockLabelForLocale } from '@/lib/store-i18n'
+import { useRouter } from 'next/navigation'
 
 interface ProductCardProps {
   product: Product
@@ -16,6 +18,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, className = '' }: ProductCardProps) {
   const { addItem } = useCartStore()
+  const router = useRouter()
   const { locale, t } = useStoreLanguage()
   const discount = product.original_price ? getDiscountPercent(product.price, product.original_price) : 0
   const stockInfo = stockLabelForLocale(product.stock, locale)
@@ -24,11 +27,16 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
     catRow ? categoryDisplayName(catRow, locale) : product.category || product.brand || '—'
   ).toUpperCase()
   const title = productDisplayName(product, locale)
+  const hasOptions = optionsLabel(product).length > 0
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     if (product.stock === 0) return
+    if (hasOptions) {
+      router.push(`/products/${product.id}`)
+      return
+    }
     addItem(product)
     toast.success(t('toast.addedNamed', { name: title }), {
       description: formatPrice(product.price),
@@ -110,7 +118,8 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
           onClick={handleAddToCart}
           disabled={product.stock === 0}
           className="product-card-atc"
-          aria-label={t('product.addToCartAria')}
+          aria-label={hasOptions ? t('product.chooseOnPage') : t('product.addToCartAria')}
+          title={hasOptions ? t('product.chooseOnPage') : undefined}
         >
           <ShoppingCart className="w-[18px] h-[18px]" strokeWidth={2.25} />
         </button>

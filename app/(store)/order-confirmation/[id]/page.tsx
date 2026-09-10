@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { supabase, Order, OrderItem } from '@/lib/supabase'
 import { formatPrice, ORDER_STATUSES } from '@/lib/utils'
+import { formatSelectedOptions } from '@/lib/product-options'
 import { CheckCircle, Package, Truck, MapPin, Phone, MessageCircle, Printer, Home } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { fbq } from '@/lib/fbq'
+import { DEFAULT_WHATSAPP, waMeUrl } from '@/lib/phone'
 
 export default function OrderConfirmationPage() {
   const params = useParams()
@@ -15,6 +17,8 @@ export default function OrderConfirmationPage() {
   const [items, setItems] = useState<OrderItem[]>([])
   const [loading, setLoading] = useState(true)
   const [purchaseTracked, setPurchaseTracked] = useState(false)
+  const [whatsappNumber, setWhatsappNumber] = useState(DEFAULT_WHATSAPP)
+  const [storeName, setStoreName] = useState('AL FAKHAMA STORE')
 
   useEffect(() => {
     async function load() {
@@ -35,6 +39,16 @@ export default function OrderConfirmationPage() {
     }
     load()
   }, [params.id])
+
+  useEffect(() => {
+    fetch('/api/settings/public')
+      .then(r => r.json())
+      .then(data => {
+        if (data.whatsapp_number) setWhatsappNumber(data.whatsapp_number)
+        if (data.store_name) setStoreName(data.store_name)
+      })
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (!order || purchaseTracked) return
@@ -66,10 +80,8 @@ export default function OrderConfirmationPage() {
     )
   }
 
-  const whatsappMsg = encodeURIComponent(
-    `Bonjour AL FAKHAMA STORE ! Je viens de passer la commande ${order.order_number}. Pouvez-vous confirmer ?`
-  )
-  const whatsappUrl = `https://wa.me/21698000000?text=${whatsappMsg}`
+  const whatsappMsg = `Bonjour ${storeName} ! Je viens de passer la commande ${order.order_number}. Pouvez-vous confirmer ?`
+  const whatsappUrl = waMeUrl(whatsappNumber, whatsappMsg)
 
   const STATUS_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
   const currentStep = STATUS_STEPS.indexOf(order.status)
@@ -206,6 +218,11 @@ export default function OrderConfirmationPage() {
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium text-[var(--text-primary)] line-clamp-1">{item.product_name}</p>
+                  {formatSelectedOptions(item.selected_options) ? (
+                    <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">
+                      {formatSelectedOptions(item.selected_options)}
+                    </p>
+                  ) : null}
                   <div className="flex items-center justify-between mt-0.5">
                     <span className="text-xs text-[var(--text-secondary)]">×{item.quantity}</span>
                     <span className="text-xs font-bold text-[var(--cyan)]">{formatPrice(item.total_price)}</span>

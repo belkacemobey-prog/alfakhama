@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { createClient, configureSupabaseClient } from '@/lib/supabase'
+import { createClient } from '@/lib/supabase'
 import { toast } from 'sonner'
 import {
   Save,
@@ -12,9 +12,7 @@ import {
   MessageCircle,
   Truck,
   DollarSign,
-  Database,
   Key,
-  Shield,
   BarChart2,
   Globe,
 } from 'lucide-react'
@@ -36,41 +34,25 @@ const STORE_FIELDS = [
 
 const INTEGRATION_FIELDS = [
   {
-    key: 'supabase_url',
-    label: 'Supabase URL',
-    icon: Database,
-    placeholder: 'https://xxxx.supabase.co',
-    type: 'text',
-    hint: 'URL du projet Supabase (NEXT_PUBLIC_SUPABASE_URL)',
-  },
-  {
-    key: 'supabase_anon_key',
-    label: 'Supabase Anon Key',
-    icon: Key,
-    placeholder: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-    type: 'password',
-    hint: 'Clé publique anon — visible côté client',
-  },
-  {
-    key: 'supabase_service_role_key',
-    label: 'Supabase Service Role Key',
-    icon: Shield,
-    placeholder: SECRET_SETTING_PLACEHOLDER,
-    type: 'password',
-    hint: 'Clé secrète serveur — laisser tel quel pour ne pas modifier',
-    secret: true,
-  },
-  {
     key: 'facebook_pixel_id',
-    label: 'Facebook Pixel ID',
+    label: 'ID Pixel',
     icon: BarChart2,
     placeholder: '978751128199622',
     type: 'text',
-    hint: 'ID du Meta Pixel affiché dans Events Manager',
+    hint: 'ID du Meta Pixel (Events Manager)',
+  },
+  {
+    key: 'meta_capi_access_token',
+    label: 'Clé API de conversion',
+    icon: Key,
+    placeholder: SECRET_SETTING_PLACEHOLDER,
+    type: 'password',
+    hint: 'Access token Meta Conversions API — laisser tel quel pour ne pas modifier',
+    secret: true,
   },
   {
     key: 'domain_verification_content',
-    label: 'Meta domain verification',
+    label: 'Vérification de domaine',
     icon: Globe,
     placeholder: 'abc123xyz...',
     type: 'text',
@@ -98,7 +80,7 @@ export default function AdminSettingsPage() {
       const secrets: Record<string, boolean> = {}
       data?.forEach((row: { key: string; value: string | null }) => {
         map[row.key] = row.value || ''
-        if (row.key === 'supabase_service_role_key' && row.value) {
+        if (row.key === 'meta_capi_access_token' && row.value) {
           map[row.key] = SECRET_SETTING_PLACEHOLDER
           secrets[row.key] = true
         }
@@ -131,12 +113,6 @@ export default function AdminSettingsPage() {
       toast.error('Erreur de sauvegarde')
       setSaving(false)
       return
-    }
-
-    const url = settings.supabase_url?.trim()
-    const anonKey = settings.supabase_anon_key?.trim()
-    if (url && anonKey && !isSecretPlaceholder(anonKey)) {
-      configureSupabaseClient(url, anonKey)
     }
 
     toast.success('Paramètres sauvegardés !')
@@ -190,8 +166,8 @@ export default function AdminSettingsPage() {
         <div>
           <h2 className="font-bold text-secondary">Intégrations</h2>
           <p className="text-sm text-gray-500 mt-1">
-            Supabase, Meta Pixel et vérification de domaine. Le pixel et la meta de vérification
-            s&apos;appliquent immédiatement après sauvegarde.
+            Meta Pixel, Conversions API et vérification de domaine. Les changements s&apos;appliquent
+            après sauvegarde.
           </p>
         </div>
 
@@ -199,41 +175,31 @@ export default function AdminSettingsPage() {
           const { key, label, icon: Icon, placeholder, type, hint } = field
           const secret = 'secret' in field && Boolean(field.secret)
           return (
-          <div key={key}>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
-              <Icon className="w-4 h-4 text-primary" />
-              {label}
-            </label>
-            <input
-              type={type}
-              value={settings[key] || ''}
-              onChange={e => {
-                const value = e.target.value
-                setSettings(prev => ({ ...prev, [key]: value }))
-                if (secret) setSecretFieldsSet(prev => ({ ...prev, [key]: false }))
-              }}
-              placeholder={placeholder}
-              className="input-field font-mono text-sm"
-              autoComplete="off"
-            />
-            {hint ? <p className="text-xs text-gray-500 mt-1">{hint}</p> : null}
-          </div>
+            <div key={key}>
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1.5">
+                <Icon className="w-4 h-4 text-primary" />
+                {label}
+              </label>
+              <input
+                type={type}
+                value={settings[key] || ''}
+                onChange={e => {
+                  const value = e.target.value
+                  setSettings(prev => ({ ...prev, [key]: value }))
+                  if (secret) setSecretFieldsSet(prev => ({ ...prev, [key]: false }))
+                }}
+                placeholder={placeholder}
+                className="input-field font-mono text-sm"
+                autoComplete="off"
+              />
+              {hint ? <p className="text-xs text-gray-500 mt-1">{hint}</p> : null}
+            </div>
           )
         })}
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-800">
-        <p className="font-semibold mb-1">Supabase & déploiement</p>
-        <p>
-          Les valeurs Supabase sont aussi utilisées comme secours via les variables d&apos;environnement
-          (.env.local / Vercel). Après un changement de projet Supabase, mettez à jour le SQL
-          (<code className="text-xs">supabase/integration-settings.sql</code>) si la sauvegarde échoue,
-          puis redéployez avec les nouvelles variables.
-        </p>
-      </div>
-
       <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 text-sm text-blue-700">
-        <p className="font-semibold mb-1">Meta domain verification</p>
+        <p className="font-semibold mb-1">Vérification de domaine</p>
         <p>
           Copiez uniquement la valeur <strong>content</strong> de la balise Meta, par exemple{' '}
           <code className="text-xs">abc123xyz</code> — pas la balise HTML complète.

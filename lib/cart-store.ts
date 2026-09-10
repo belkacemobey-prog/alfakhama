@@ -1,18 +1,20 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { Product } from './supabase'
+import { cartLineKey } from './product-options'
 
 export interface CartItem {
   product: Product
   quantity: number
+  selectedOptions: Record<string, string>
 }
 
 interface CartStore {
   items: CartItem[]
   isOpen: boolean
-  addItem: (product: Product, quantity?: number) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
+  addItem: (product: Product, quantity?: number, selectedOptions?: Record<string, string>) => void
+  removeItem: (lineKey: string) => void
+  updateQuantity: (lineKey: string, quantity: number) => void
   clearCart: () => void
   openCart: () => void
   closeCart: () => void
@@ -21,42 +23,45 @@ interface CartStore {
   itemCount: number
 }
 
+function lineKeyOf(item: CartItem): string {
+  return cartLineKey(item.product.id, item.selectedOptions || {})
+}
+
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
       isOpen: false,
 
-      addItem: (product, quantity = 1) => {
+      addItem: (product, quantity = 1, selectedOptions = {}) => {
+        const key = cartLineKey(product.id, selectedOptions)
         const items = get().items
-        const existing = items.find(i => i.product.id === product.id)
+        const existing = items.find(i => lineKeyOf(i) === key)
         if (existing) {
           set({
             items: items.map(i =>
-              i.product.id === product.id
-                ? { ...i, quantity: i.quantity + quantity }
-                : i
+              lineKeyOf(i) === key ? { ...i, quantity: i.quantity + quantity } : i
             ),
           })
         } else {
-          set({ items: [...items, { product, quantity }] })
+          set({
+            items: [...items, { product, quantity, selectedOptions: { ...selectedOptions } }],
+          })
         }
         set({ isOpen: true })
       },
 
-      removeItem: (productId) => {
-        set({ items: get().items.filter(i => i.product.id !== productId) })
+      removeItem: lineKey => {
+        set({ items: get().items.filter(i => lineKeyOf(i) !== lineKey) })
       },
 
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (lineKey, quantity) => {
         if (quantity <= 0) {
-          get().removeItem(productId)
+          get().removeItem(lineKey)
           return
         }
         set({
-          items: get().items.map(i =>
-            i.product.id === productId ? { ...i, quantity } : i
-          ),
+          items: get().items.map(i => (lineKeyOf(i) === lineKey ? { ...i, quantity } : i)),
         })
       },
 
@@ -76,6 +81,14 @@ export const useCartStore = create<CartStore>()(
     {
       name: 'electrotunisie-cart',
       storage: createJSONStorage(() => localStorage),
+      merge: (persisted, current) => {
+        const p = persisted as Partial<CartStore> | undefined
+        const items = (p?.items || []).map(item => ({
+          ...item,
+          selectedOptions: item.selectedOptions || {},
+        }))
+        return { ...current, ...p, items }
+      },
     }
   )
 )

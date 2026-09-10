@@ -5,6 +5,12 @@ import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/lib/cart-store'
 import { supabase, Governorate } from '@/lib/supabase'
 import { formatPrice, generateOrderNumber } from '@/lib/utils'
+import {
+  calcCartDeliveryFee,
+  cartLineKey,
+  formatSelectedOptions,
+  FREE_DELIVERY_THRESHOLD,
+} from '@/lib/product-options'
 import GovernorateCarousel from '@/components/store/GovernorateCarousel'
 import { toast } from 'sonner'
 import { ShoppingCart, User, MapPin, CreditCard, Truck, CheckCircle, Loader2 } from 'lucide-react'
@@ -29,7 +35,7 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const subtotal = items.reduce((s, i) => s + i.product.price * i.quantity, 0)
-  const deliveryFee = subtotal >= 500 ? 0 : 7
+  const deliveryFee = calcCartDeliveryFee(items, subtotal)
   const total = subtotal + deliveryFee
 
   useEffect(() => {
@@ -119,6 +125,7 @@ export default function CheckoutPage() {
         quantity: item.quantity,
         unit_price: item.product.price,
         total_price: item.product.price * item.quantity,
+        selected_options: item.selectedOptions || {},
       }))
 
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
@@ -289,8 +296,11 @@ export default function CheckoutPage() {
               </h2>
 
               <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
-                {items.map(item => (
-                  <div key={item.product.id} className="flex gap-3">
+                {items.map(item => {
+                  const lineKey = cartLineKey(item.product.id, item.selectedOptions)
+                  const optsLabel = formatSelectedOptions(item.selectedOptions)
+                  return (
+                  <div key={lineKey} className="flex gap-3">
                     <div className="w-12 h-12 bg-[#060C18] rounded-lg overflow-hidden flex-shrink-0 border border-[var(--border-card)]">
                       {item.product.images?.[0] && (
                         <img
@@ -304,6 +314,9 @@ export default function CheckoutPage() {
                       <p className="text-xs font-medium text-[var(--text-primary)] line-clamp-2 leading-tight">
                         {productDisplayName(item.product, locale)}
                       </p>
+                      {optsLabel ? (
+                        <p className="text-[10px] text-[var(--text-secondary)] mt-0.5">{optsLabel}</p>
+                      ) : null}
                       <div className="flex items-center justify-between mt-1">
                         <span className="text-xs text-[var(--text-secondary)]">×{item.quantity}</span>
                         <span className="text-xs font-bold text-[var(--cyan)]">
@@ -312,7 +325,8 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                   </div>
-                ))}
+                  )
+                })}
               </div>
 
               <div className="border-t border-[var(--border-card)] pt-3 space-y-2 text-sm">
@@ -329,9 +343,11 @@ export default function CheckoutPage() {
                     {deliveryFee === 0 ? t('cart.gratis') : formatPrice(deliveryFee)}
                   </span>
                 </div>
-                {deliveryFee > 0 && (
+                {deliveryFee > 0 && subtotal < FREE_DELIVERY_THRESHOLD && (
                   <p className="text-xs text-[var(--text-secondary)]">
-                    {t('cart.freeShippingHint', { amount: formatPrice(500 - subtotal) })}
+                    {t('cart.freeShippingHint', {
+                      amount: formatPrice(FREE_DELIVERY_THRESHOLD - subtotal),
+                    })}
                   </p>
                 )}
                 <div className="flex justify-between font-bold text-base border-t border-[var(--border-card)] pt-2">

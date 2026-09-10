@@ -5,6 +5,10 @@ import { useParams } from 'next/navigation'
 import { supabase, Product } from '@/lib/supabase'
 import { formatPrice, getDiscountPercent, CATEGORIES } from '@/lib/utils'
 import { useCartStore } from '@/lib/cart-store'
+import {
+  optionsLabel,
+  productDeliveryFee,
+} from '@/lib/product-options'
 import { ShoppingCart, Star, ZoomIn, Truck, ShieldCheck, RefreshCw, Plus, Minus } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
@@ -28,6 +32,7 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [isZoomed, setIsZoomed] = useState(false)
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
 
   useEffect(() => {
     async function load() {
@@ -85,13 +90,31 @@ export default function ProductDetailPage() {
   const description = productDisplayDescription(product, locale)
   const discount = product.original_price ? getDiscountPercent(product.price, product.original_price) : 0
   const stockInfo = stockLabelForLocale(product.stock, locale)
+  const optionGroups = optionsLabel(product)
+  const deliveryFee = productDeliveryFee(product)
+
+  const allOptionsSelected =
+    optionGroups.length === 0 || optionGroups.every(g => Boolean(selectedOptions[g.name]))
 
   const handleAddToCart = () => {
     if (product.stock === 0) return
-    addItem(product, quantity)
+    if (!allOptionsSelected) {
+      toast.error(t('product.optionsRequired'))
+      return
+    }
+    addItem(product, quantity, selectedOptions)
     toast.success(t('toast.addedTitle'), {
       description: t('toast.addedDesc', { qty: quantity, name: displayTitle }),
     })
+  }
+
+  const handleBuyNow = () => {
+    if (product.stock === 0) return
+    if (!allOptionsSelected) {
+      toast.error(t('product.optionsRequired'))
+      return
+    }
+    addItem(product, quantity, selectedOptions)
   }
 
   const images =
@@ -213,6 +236,45 @@ export default function ProductDetailPage() {
             {stockInfo.label}
           </div>
 
+          <p className="text-sm text-[var(--text-secondary)] mb-6 flex items-center gap-2">
+            <Truck className="w-4 h-4 text-[var(--cyan)]" />
+            {deliveryFee === 0
+              ? t('product.deliveryFree')
+              : t('product.deliveryFee', { fee: formatPrice(deliveryFee) })}
+          </p>
+
+          {optionGroups.length > 0 && (
+            <div className="space-y-4 mb-6">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">{t('product.chooseOptions')}</p>
+              {optionGroups.map(group => (
+                <div key={group.name}>
+                  <p className="text-sm text-[var(--text-secondary)] mb-2">{group.name}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {group.values.map(value => {
+                      const active = selectedOptions[group.name] === value
+                      return (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setSelectedOptions(prev => ({ ...prev, [group.name]: value }))
+                          }
+                          className={`px-3.5 py-2 rounded-xl text-sm font-medium border transition-colors ${
+                            active
+                              ? 'border-[var(--cyan)] bg-[var(--cyan)]/15 text-[var(--cyan)]'
+                              : 'border-[var(--border-card)] text-[var(--text-primary)] hover:border-[var(--cyan)]/50'
+                          }`}
+                        >
+                          {value}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           <div className="flex items-center gap-4 mb-6">
             <span className="text-sm font-medium text-[var(--text-secondary)]">{t('product.qty')}</span>
             <div className="flex items-center border border-[var(--border-card)] rounded-xl overflow-hidden bg-[var(--bg-input)]">
@@ -248,8 +310,10 @@ export default function ProductDetailPage() {
             </button>
             <Link
               href={`/checkout`}
-              onClick={() => addItem(product, quantity)}
-              className="btn-secondary flex items-center gap-2 py-3.5 px-6 rounded-xl font-bold"
+              onClick={handleBuyNow}
+              className={`btn-secondary flex items-center gap-2 py-3.5 px-6 rounded-xl font-bold ${
+                product.stock === 0 || !allOptionsSelected ? 'pointer-events-none opacity-50' : ''
+              }`}
             >
               {t('product.order')}
             </Link>
