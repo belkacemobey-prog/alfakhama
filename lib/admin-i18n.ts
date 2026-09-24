@@ -49,6 +49,7 @@ export const adminMessages: Record<AdminLocale, Record<string, string>> = {
 
     'status.pending': 'En attente',
     'status.confirmed': 'Confirmé',
+    'status.telecharge': 'Téléchargé',
     'status.processing': 'En traitement',
     'status.shipped': 'Expédié',
     'status.delivered': 'Livré',
@@ -201,6 +202,7 @@ export const adminMessages: Record<AdminLocale, Record<string, string>> = {
 
     'status.pending': 'قيد الانتظار',
     'status.confirmed': 'مؤكد',
+    'status.telecharge': 'تم التحميل',
     'status.processing': 'قيد المعالجة',
     'status.shipped': 'تم الشحن',
     'status.delivered': 'تم التسليم',

@@ -4,7 +4,7 @@ import { Product } from '@/lib/supabase'
 import { formatPrice, getDiscountPercent, CATEGORIES } from '@/lib/utils'
 import { optionsLabel } from '@/lib/product-options'
 import { useCartStore } from '@/lib/cart-store'
-import { ShoppingCart, Star, Eye } from 'lucide-react'
+import { ShoppingCart, Star, Eye, Zap } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { useStoreLanguage } from '@/components/store/StoreLanguageProvider'
@@ -28,19 +28,28 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
   ).toUpperCase()
   const title = productDisplayName(product, locale)
   const hasOptions = optionsLabel(product).length > 0
+  const outOfStock = product.stock === 0
+
+  const goToProduct = () => router.push(`/products/${product.id}`)
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (product.stock === 0) return
+    if (outOfStock) return
     if (hasOptions) {
-      router.push(`/products/${product.id}`)
+      goToProduct()
       return
     }
     addItem(product)
     toast.success(t('toast.addedNamed', { name: title }), {
       description: formatPrice(product.price),
     })
+  }
+
+  const handleExpress = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    goToProduct()
   }
 
   return (
@@ -99,10 +108,10 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
         </div>
       </Link>
 
-      <div className="px-4 pb-4 flex items-center justify-between gap-3">
+      <div className="px-4 pb-2">
         <Link
           href={`/products/${product.id}`}
-          className="flex flex-wrap items-baseline gap-2 min-w-0 flex-1"
+          className="flex flex-wrap items-baseline gap-2 min-w-0"
         >
           <span className="text-[22px] font-extrabold text-[var(--text-price)] leading-none">
             {formatPrice(product.price)}
@@ -113,20 +122,31 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
             </span>
           )}
         </Link>
+        <p className={`text-xs font-medium mt-1 ${stockInfo.color}`}>{stockInfo.label}</p>
+      </div>
+
+      <div className="px-4 pb-4 flex gap-2">
+        <button
+          type="button"
+          onClick={handleExpress}
+          disabled={outOfStock}
+          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label={t('product.expressAria')}
+          title={hasOptions ? t('product.chooseOnPage') : t('product.express')}
+        >
+          <Zap className="w-3.5 h-3.5" />
+          {t('product.express')}
+        </button>
         <button
           type="button"
           onClick={handleAddToCart}
-          disabled={product.stock === 0}
-          className="product-card-atc"
+          disabled={outOfStock}
+          className="product-card-atc shrink-0"
           aria-label={hasOptions ? t('product.chooseOnPage') : t('product.addToCartAria')}
-          title={hasOptions ? t('product.chooseOnPage') : undefined}
+          title={hasOptions ? t('product.chooseOnPage') : t('product.addToCart')}
         >
           <ShoppingCart className="w-[18px] h-[18px]" strokeWidth={2.25} />
         </button>
-      </div>
-
-      <div className="px-4 pb-3 -mt-1">
-        <p className={`text-xs font-medium ${stockInfo.color}`}>{stockInfo.label}</p>
       </div>
     </div>
   )

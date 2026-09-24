@@ -65,7 +65,8 @@ export const BRANDS = ['Samsung', 'LG', 'Beko', 'Ariston', 'Brandt', 'Iris', 'Co
 
 export const ORDER_STATUSES = {
   pending: { label: 'En attente', color: 'bg-yellow-100 text-yellow-800', icon: '⏳' },
-  confirmed: { label: 'Confirmé', color: 'bg-blue-100 text-blue-800', icon: '✅' },
+  confirmed: { label: 'Confirmé', color: 'bg-sky-100 text-sky-800', icon: '✅' },
+  telecharge: { label: 'Téléchargé', color: 'bg-blue-600 text-white', icon: '📤' },
   processing: { label: 'En traitement', color: 'bg-purple-100 text-purple-800', icon: '⚙️' },
   shipped: { label: 'Expédié', color: 'bg-indigo-100 text-indigo-800', icon: '🚚' },
   delivered: { label: 'Livré', color: 'bg-green-100 text-green-800', icon: '✔️' },

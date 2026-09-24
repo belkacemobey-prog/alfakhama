@@ -12,7 +12,12 @@ export interface CartItem {
 interface CartStore {
   items: CartItem[]
   isOpen: boolean
-  addItem: (product: Product, quantity?: number, selectedOptions?: Record<string, string>) => void
+  addItem: (
+    product: Product,
+    quantity?: number,
+    selectedOptions?: Record<string, string>,
+    opts?: { openDrawer?: boolean }
+  ) => void
   removeItem: (lineKey: string) => void
   updateQuantity: (lineKey: string, quantity: number) => void
   clearCart: () => void
@@ -33,7 +38,7 @@ export const useCartStore = create<CartStore>()(
       items: [],
       isOpen: false,
 
-      addItem: (product, quantity = 1, selectedOptions = {}) => {
+      addItem: (product, quantity = 1, selectedOptions = {}, opts) => {
         const key = cartLineKey(product.id, selectedOptions)
         const items = get().items
         const existing = items.find(i => lineKeyOf(i) === key)
@@ -48,7 +53,9 @@ export const useCartStore = create<CartStore>()(
             items: [...items, { product, quantity, selectedOptions: { ...selectedOptions } }],
           })
         }
-        set({ isOpen: true })
+        if (opts?.openDrawer !== false) {
+          set({ isOpen: true })
+        }
       },
 
       removeItem: lineKey => {

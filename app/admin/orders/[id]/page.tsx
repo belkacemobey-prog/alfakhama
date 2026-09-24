@@ -23,8 +23,14 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
   if (!data) notFound()
   const { order, items } = data
 
-  const STATUS_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
-  const currentStep = STATUS_STEPS.indexOf(order.status)
+  const isTelecharge =
+    order.status === 'telecharge' ||
+    Boolean(order.delivery_barcode) ||
+    Boolean(order.notes && /BestWay barcode:/i.test(order.notes))
+  const effectiveStatus = isTelecharge ? 'telecharge' : order.status
+
+  const STATUS_STEPS = ['pending', 'confirmed', 'telecharge', 'processing', 'shipped', 'delivered']
+  const currentStep = STATUS_STEPS.indexOf(effectiveStatus)
   const whatsappMsg = encodeURIComponent(`Bonjour ${order.customer_name}, votre commande ${order.order_number} est `)
   const whatsappUrl = `https://wa.me/${order.customer_phone.replace('+', '')}?text=${whatsappMsg}`
 
@@ -61,11 +67,27 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
               const status = ORDER_STATUSES[step as keyof typeof ORDER_STATUSES]
               return (
                 <div key={step} className="flex flex-col items-center gap-1 relative z-10 flex-1">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm border-2 transition-all ${isCurrent ? 'bg-primary border-primary text-primary-foreground' : isDone ? 'bg-green-500 border-green-500 text-white' : 'bg-white border-gray-200 text-gray-400'}`}>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-sm border-2 transition-all ${
+                    isCurrent && step === 'telecharge'
+                      ? 'bg-blue-600 border-blue-600 text-white'
+                      : isCurrent
+                        ? 'bg-primary border-primary text-primary-foreground'
+                        : isDone
+                          ? 'bg-green-500 border-green-500 text-white'
+                          : 'bg-white border-gray-200 text-gray-400'
+                  }`}>
                     {isDone ? '✓' : idx + 1}
                   </div>
-                  <span className={`text-xs font-medium hidden sm:block text-center leading-tight max-w-[70px] ${isCurrent ? 'text-primary' : isDone ? 'text-green-600' : 'text-gray-400'}`}>
-                    {status.label}
+                  <span className={`text-xs font-medium hidden sm:block text-center leading-tight max-w-[70px] ${
+                    isCurrent && step === 'telecharge'
+                      ? 'text-blue-700 font-semibold'
+                      : isCurrent
+                        ? 'text-primary'
+                        : isDone
+                          ? 'text-green-600'
+                          : 'text-gray-400'
+                  }`}>
+                    {status?.label}
                   </span>
                 </div>
               )
@@ -93,7 +115,13 @@ export default async function AdminOrderDetailPage({ params }: { params: { id: s
           <Settings className="w-4 h-4 text-primary" />
           Mettre à jour le statut
         </h2>
-        <OrderStatusUpdater orderId={order.id} currentStatus={order.status} />
+        <OrderStatusUpdater
+          orderId={order.id}
+          currentStatus={effectiveStatus}
+          deliveryBarcode={order.delivery_barcode}
+          deliveryCarrier={order.delivery_carrier}
+          orderNotes={order.notes}
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">

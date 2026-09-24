@@ -83,7 +83,7 @@ export default function OrderConfirmationPage() {
   const whatsappMsg = `Bonjour ${storeName} ! Je viens de passer la commande ${order.order_number}. Pouvez-vous confirmer ?`
   const whatsappUrl = waMeUrl(whatsappNumber, whatsappMsg)
 
-  const STATUS_STEPS = ['pending', 'confirmed', 'processing', 'shipped', 'delivered']
+  const STATUS_STEPS = ['pending', 'confirmed', 'telecharge', 'processing', 'shipped', 'delivered']
   const currentStep = STATUS_STEPS.indexOf(order.status)
 
   return (

@@ -83,10 +83,13 @@ create table if not exists orders (
   governorate_name text not null,
   address text,
   notes text,
-  status text default 'pending' check (status in ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')),
+  status text default 'pending' check (status in ('pending', 'confirmed', 'telecharge', 'processing', 'shipped', 'delivered', 'cancelled')),
   total_amount decimal(10,2) not null,
   delivery_fee decimal(10,2) default 7.000,
   payment_method text default 'cash_on_delivery',
+  delivery_carrier text,
+  delivery_barcode text,
+  delivery_pck_code text,
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );

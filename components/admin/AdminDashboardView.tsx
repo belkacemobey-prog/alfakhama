@@ -36,13 +36,18 @@ export default function AdminDashboardView({
 }) {
   const { locale, t } = useAdminLanguage()
 
-  const statusCounts = {
-    pending: allOrders.filter(o => o.status === 'pending').length,
-    confirmed: allOrders.filter(o => o.status === 'confirmed').length,
-    processing: allOrders.filter(o => o.status === 'processing').length,
-    shipped: allOrders.filter(o => o.status === 'shipped').length,
-    delivered: allOrders.filter(o => o.status === 'delivered').length,
-    cancelled: allOrders.filter(o => o.status === 'cancelled').length,
+  const statusCounts: Record<string, number> = {
+    pending: 0,
+    confirmed: 0,
+    telecharge: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+  }
+  for (const o of allOrders) {
+    if (o.status in statusCounts) statusCounts[o.status] += 1
+    else statusCounts[o.status] = (statusCounts[o.status] || 0) + 1
   }
 
   const kpis = [
@@ -109,14 +114,14 @@ export default function AdminDashboardView({
 
       <div className="card p-5">
         <h2 className="font-bold text-secondary mb-4">{t('dash.byStatus')}</h2>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
           {Object.entries(ORDER_STATUSES).map(([key, status]) => (
             <Link
               key={key}
               href={`/admin/orders?status=${key}`}
               className={`text-center p-3 rounded-xl ${status.color} hover:opacity-90 transition-opacity`}
             >
-              <p className="text-2xl font-bold">{statusCounts[key as keyof typeof statusCounts]}</p>
+              <p className="text-2xl font-bold">{statusCounts[key] ?? 0}</p>
               <p className="text-xs font-medium mt-1">{adminOrderStatusLabel(locale, key)}</p>
             </Link>
           ))}

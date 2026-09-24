@@ -124,10 +124,13 @@ export interface Order {
   governorate_name: string
   address: string | null
   notes: string | null
-  status: 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  status: 'pending' | 'confirmed' | 'telecharge' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
   total_amount: number
   delivery_fee: number
   payment_method: string
+  delivery_carrier: string | null
+  delivery_barcode: string | null
+  delivery_pck_code: string | null
   created_at: string
   updated_at: string
 }

@@ -3,7 +3,7 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { formatPrice, ORDER_STATUSES } from '@/lib/utils'
-import { Eye, Download } from 'lucide-react'
+import { Eye, Download, Lock } from 'lucide-react'
 import AdminOrdersFilters from '@/components/admin/AdminOrdersFilters'
 import { useAdminLanguage } from '@/components/admin/AdminLanguageProvider'
 import { adminOrderStatusLabel } from '@/lib/admin-i18n'
@@ -17,6 +17,15 @@ export type AdminOrderRow = {
   total_amount: number
   status: string
   created_at: string
+  notes?: string | null
+  delivery_barcode?: string | null
+}
+
+function displayStatus(order: AdminOrderRow): string {
+  if (order.status === 'telecharge') return 'telecharge'
+  if (order.delivery_barcode) return 'telecharge'
+  if (order.notes && /BestWay barcode:/i.test(order.notes)) return 'telecharge'
+  return order.status
 }
 
 function buildOrdersUrl(
@@ -93,7 +102,11 @@ export default function AdminOrdersClient({
             key={k}
             href={buildOrdersUrl(searchParams, { status: k, page: undefined })}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-              searchParams.status === k ? v.color + ' font-bold' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              searchParams.status === k
+                ? `${v.color} font-bold`
+                : k === 'telecharge'
+                  ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             {adminOrderStatusLabel(locale, k)}
@@ -134,13 +147,20 @@ export default function AdminOrdersClient({
                     <td className="px-4 py-3 text-sm text-gray-600">{order.governorate_name}</td>
                     <td className="px-4 py-3 text-sm font-bold text-primary">{formatPrice(order.total_amount)}</td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                          ORDER_STATUSES[order.status as keyof typeof ORDER_STATUSES]?.color
-                        }`}
-                      >
-                        {adminOrderStatusLabel(locale, order.status)}
-                      </span>
+                      {(() => {
+                        const st = displayStatus(order)
+                        return (
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              ORDER_STATUSES[st as keyof typeof ORDER_STATUSES]?.color ||
+                              'bg-gray-100 text-gray-700'
+                            }`}
+                          >
+                            {st === 'telecharge' ? <Lock className="w-3 h-3" /> : null}
+                            {adminOrderStatusLabel(locale, st)}
+                          </span>
+                        )
+                      })()}
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">
                       {new Date(order.created_at).toLocaleDateString(locale === 'ar' ? 'ar-TN' : 'fr-TN')}

@@ -13,6 +13,14 @@ export const INTEGRATION_SETTING_KEYS = [
   'domain_verification_content',
 ] as const
 
+export const DELIVERY_SETTING_KEYS = [
+  'bestway_login',
+  'bestway_password',
+  'bestway_modalite',
+  'bestway_open_parcel',
+  'bestway_fragile',
+] as const
+
 export const PUBLIC_SETTINGS_KEYS = [
   ...STORE_SETTING_KEYS,
   'facebook_pixel_id',
@@ -64,9 +72,10 @@ export function sanitizeDomainVerificationContent(raw: string | null | undefined
 }
 
 export function resolveDomainVerification(settings: SiteSettings): string {
+  // Env first so production deploy works even if DB/RLS lags
   return (
-    sanitizeDomainVerificationContent(settings.domain_verification_content) ||
     sanitizeDomainVerificationContent(process.env.NEXT_PUBLIC_FACEBOOK_DOMAIN_VERIFICATION) ||
+    sanitizeDomainVerificationContent(settings.domain_verification_content) ||
     ''
   )
 }

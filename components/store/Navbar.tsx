@@ -212,7 +212,7 @@ export default function Navbar({ storePhone }: { storePhone?: string }) {
             <Link
               href="/admin/login"
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[var(--text-primary)] border border-[var(--border-card)] rounded-[10px] hover:border-[var(--cyan)] hover:text-[var(--cyan)] transition-colors"
-              title={locale === 'ar' ? 'دخول المشرف' : 'Connexion administrateur'}
+              title={t('nav.adminLogin')}
             >
               <LogIn className="w-3.5 h-3.5" />
               {t('nav.admin')}
