@@ -53,6 +53,14 @@ const INTEGRATION_FIELDS = [
     secret: true,
   },
   {
+    key: 'meta_test_event_code',
+    label: 'Code Test Events (Meta)',
+    icon: BarChart2,
+    placeholder: 'TEST12345',
+    type: 'text',
+    hint: 'Events Manager → Test events → code TEST… (temporaire, pour voir les événements)',
+  },
+  {
     key: 'domain_verification_content',
     label: 'Vérification de domaine',
     icon: Globe,

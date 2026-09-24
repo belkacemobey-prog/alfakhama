@@ -2,17 +2,18 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { Toaster } from 'sonner'
 import { FacebookPixel } from '@/components/FacebookPixel'
+import FacebookPixelHead from '@/components/FacebookPixelHead'
 import { SupabaseProvider } from '@/components/SupabaseProvider'
 import {
   resolveDomainVerification,
   resolveFacebookPixelId,
+  resolveMetaTestEventCode,
 } from '@/lib/site-settings'
 import { fetchSettings } from '@/lib/site-settings-server'
 
 export const dynamic = 'force-dynamic'
 
 async function getDomainVerificationCode(): Promise<string> {
-  // Prefer env (reliable on Vercel) then DB settings
   const fromEnv = resolveDomainVerification({})
   if (fromEnv) return fromEnv
   const settings = await fetchSettings(['domain_verification_content', 'facebook_pixel_id'])
@@ -60,9 +61,10 @@ export default async function RootLayout({
 }) {
   const [domainVerification, settings] = await Promise.all([
     getDomainVerificationCode(),
-    fetchSettings(['facebook_pixel_id']),
+    fetchSettings(['facebook_pixel_id', 'meta_test_event_code']),
   ])
   const fbPixelId = resolveFacebookPixelId(settings)
+  const testEventCode = resolveMetaTestEventCode(settings)
 
   return (
     <html lang="fr">
@@ -71,7 +73,7 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
-        {/* Explicit tag for Meta crawler (in addition to metadata.verification) */}
+        <FacebookPixelHead pixelId={fbPixelId} testEventCode={testEventCode || undefined} />
         {domainVerification ? (
           <meta name="facebook-domain-verification" content={domainVerification} />
         ) : null}

@@ -10,6 +10,7 @@ export const STORE_SETTING_KEYS = [
 export const INTEGRATION_SETTING_KEYS = [
   'facebook_pixel_id',
   'meta_capi_access_token',
+  'meta_test_event_code',
   'domain_verification_content',
 ] as const
 
@@ -52,8 +53,26 @@ export function resolveSupabaseServiceRoleKey(settings: SiteSettings): string {
   return settings.supabase_service_role_key || process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-key'
 }
 
-export function resolveFacebookPixelId(settings: SiteSettings): string {
-  return settings.facebook_pixel_id || process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID || ''
+export function resolveFacebookPixelId(settings: SiteSettings = {}): string {
+  const raw =
+    settings.facebook_pixel_id ||
+    process.env.NEXT_PUBLIC_FACEBOOK_PIXEL_ID ||
+    process.env.NEXT_PUBLIC_FB_PIXEL_ID ||
+    process.env.NEXT_PUBLIC_META_PIXEL_ID ||
+    process.env.FACEBOOK_PIXEL_ID ||
+    ''
+  // Pixel IDs are numeric — strip junk if user pasted a full URL / tag
+  const digits = String(raw).trim().replace(/\D/g, '')
+  return digits
+}
+
+export function resolveMetaTestEventCode(settings: SiteSettings = {}): string {
+  return (
+    settings.meta_test_event_code?.trim() ||
+    process.env.NEXT_PUBLIC_META_TEST_EVENT_CODE?.trim() ||
+    process.env.META_TEST_EVENT_CODE?.trim() ||
+    ''
+  )
 }
 
 export function resolveMetaCapiAccessToken(settings: SiteSettings): string {
