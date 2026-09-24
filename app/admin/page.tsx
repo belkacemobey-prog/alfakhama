@@ -28,13 +28,25 @@ async function getDashboardData() {
     supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(8),
   ])
 
+  type DashboardOrder = {
+    id: string
+    total_amount: number
+    status: string
+    created_at: string
+    notes?: string | null
+    delivery_barcode?: string | null
+  }
+
   // Si delivery_barcode n'existe pas encore en schéma, retomber sans cette colonne
-  let orders = allOrdersResp.data || []
+  let orders: DashboardOrder[] = (allOrdersResp.data as DashboardOrder[] | null) || []
   if (allOrdersResp.error) {
     const fallback = await supabase
       .from('orders')
       .select('id, total_amount, status, created_at, notes')
-    orders = fallback.data || []
+    orders = ((fallback.data as Omit<DashboardOrder, 'delivery_barcode'>[] | null) || []).map(o => ({
+      ...o,
+      delivery_barcode: null,
+    }))
   }
 
   const todayOrders = orders.filter(o => o.created_at >= todayStart)

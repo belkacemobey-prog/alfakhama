@@ -70,7 +70,7 @@ async function loadSettingMap(
     console.error('[bestway] settings load:', error.message)
   }
   const map: Record<string, string> = {}
-  data?.forEach(row => {
+  data?.forEach((row: { key: string; value: string | null }) => {
     if (row.value && !isSecretPlaceholder(row.value)) map[row.key] = row.value
   })
   return map
