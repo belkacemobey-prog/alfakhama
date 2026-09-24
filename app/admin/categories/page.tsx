@@ -22,7 +22,10 @@ export default function AdminCategoriesPage() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load on mount
+  }, [])
 
   const handleSave = async () => {
     if (!form.name) { toast.error('Nom requis'); return }

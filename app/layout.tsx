@@ -69,10 +69,6 @@ export default async function RootLayout({
   return (
     <html lang="fr">
       <head>
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
         <FacebookPixelHead pixelId={fbPixelId} testEventCode={testEventCode || undefined} />
         {domainVerification ? (
           <meta name="facebook-domain-verification" content={domainVerification} />

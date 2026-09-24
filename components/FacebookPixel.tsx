@@ -11,52 +11,13 @@ declare global {
   }
 }
 
-function ensurePixel(pixelId: string) {
-  const id = pixelId.replace(/\D/g, '')
-  if (!id || typeof window === 'undefined') return
-
-  if (typeof window.fbq === 'function') {
-    // Already bootstrapped from <head> — do not double PageView here
-    return
-  }
-
-  const w = window as Window & { _fbq?: unknown }
-  const n = function (...args: unknown[]) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fn = n as any
-    fn.callMethod ? fn.callMethod.apply(fn, args) : fn.queue.push(args)
-  } as ((...args: unknown[]) => void) & {
-    callMethod?: (...args: unknown[]) => void
-    queue: unknown[]
-    loaded: boolean
-    version: string
-    push: (...args: unknown[]) => void
-  }
-  if (!w._fbq) w._fbq = n
-  n.push = n
-  n.loaded = true
-  n.version = '2.0'
-  n.queue = []
-  w.fbq = n
-
-  const t = document.createElement('script')
-  t.async = true
-  t.src = 'https://connect.facebook.net/en_US/fbevents.js'
-  const s = document.getElementsByTagName('script')[0]
-  s?.parentNode?.insertBefore(t, s)
-
-  w.fbq('init', id)
-  w.fbq('track', 'PageView')
-}
-
 /**
  * Client pixel: SPA PageViews + fallback init if head snippet had no ID.
  */
 export function FacebookPixel({ pixelId }: { pixelId: string }) {
-  const [resolvedId, setResolvedId] = useState(pixelId.replace(/\D/g, ''))
+  const [resolvedId, setResolvedId] = useState(() => String(pixelId || '').replace(/\D/g, ''))
 
   useEffect(() => {
-    // Capture Meta Test Events code from URL (?test_event_code=TEST…)
     try {
       const sp = new URLSearchParams(window.location.search)
       const fromUrl = sp.get('test_event_code') || sp.get('testEventCode')
@@ -73,22 +34,18 @@ export function FacebookPixel({ pixelId }: { pixelId: string }) {
   }, [])
 
   useEffect(() => {
+    if (resolvedId) return
     let cancelled = false
-    async function boot() {
-      let id = resolvedId
-      if (!id) {
-        try {
-          const res = await fetch('/api/settings/public')
-          const data = await res.json()
-          id = String(data.facebook_pixel_id || '').replace(/\D/g, '')
-          if (!cancelled && id) setResolvedId(id)
-        } catch {
-          return
-        }
+    ;(async () => {
+      try {
+        const res = await fetch('/api/settings/public')
+        const data = await res.json()
+        const id = String(data.facebook_pixel_id || '').replace(/\D/g, '')
+        if (!cancelled && id) setResolvedId(id)
+      } catch {
+        /* ignore */
       }
-      if (!cancelled && id) ensurePixel(id)
-    }
-    void boot()
+    })()
     return () => {
       cancelled = true
     }
@@ -96,13 +53,41 @@ export function FacebookPixel({ pixelId }: { pixelId: string }) {
 
   if (!resolvedId) return null
 
+  // Meta's official bootstrap (string) — avoids ESLint issues with apply()/ternary expressions
+  const bootstrap = `
+if (!window.fbq) {
+  (function (f, b, e, v, n, t, s) {
+    if (f.fbq) return;
+    n = f.fbq = function () {
+      if (n.callMethod) {
+        n.callMethod.apply(n, arguments);
+      } else {
+        n.queue.push(arguments);
+      }
+    };
+    if (!f._fbq) f._fbq = n;
+    n.push = n;
+    n.loaded = true;
+    n.version = '2.0';
+    n.queue = [];
+    t = b.createElement(e);
+    t.async = true;
+    t.src = v;
+    s = b.getElementsByTagName(e)[0];
+    s.parentNode.insertBefore(t, s);
+  })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '${resolvedId}');
+  fbq('track', 'PageView');
+}
+`.trim()
+
   return (
     <>
-      {/* Fallback if head bootstrap missing (keeps noscript beacon) */}
       <Script id="meta-pixel-fallback" strategy="afterInteractive">
-        {`if(!window.fbq){(function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');fbq('init','${resolvedId}');fbq('track','PageView');}`}
+        {bootstrap}
       </Script>
       <noscript>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           height="1"
           width="1"

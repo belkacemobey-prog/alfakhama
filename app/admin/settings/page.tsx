@@ -131,6 +131,7 @@ export default function AdminSettingsPage() {
       setLoading(false)
     }
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load settings once on mount
   }, [])
 
   const handleSave = async () => {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { Plus, Edit2, Trash2, Check, Eye, EyeOff, Loader2, Image } from 'lucide-react'
+import { Plus, Edit2, Trash2, Check, Eye, EyeOff, Loader2, Image as ImageIcon } from 'lucide-react'
 
 export default function AdminBannersPage() {
   const [banners, setBanners] = useState<any[]>([])
@@ -21,7 +21,10 @@ export default function AdminBannersPage() {
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    void load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- load on mount
+  }, [])
 
   const handleSave = async () => {
     if (!form.image) { toast.error('Image requise'); return }
@@ -110,7 +113,7 @@ export default function AdminBannersPage() {
           <div className="card p-8 text-center text-gray-400">Chargement...</div>
         ) : banners.length === 0 ? (
           <div className="card p-12 text-center">
-            <Image className="w-12 h-12 text-gray-200 mx-auto mb-3" />
+            <ImageIcon className="w-12 h-12 text-gray-200 mx-auto mb-3" aria-hidden />
             <p className="text-gray-500">Aucune bannière. Créez la première !</p>
           </div>
         ) : banners.map(banner => (
