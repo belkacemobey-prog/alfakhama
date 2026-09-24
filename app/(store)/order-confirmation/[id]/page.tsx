@@ -8,7 +8,7 @@ import { formatSelectedOptions } from '@/lib/product-options'
 import { CheckCircle, Package, Truck, MapPin, Phone, MessageCircle, Printer, Home } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { fbq } from '@/lib/fbq'
+import { trackPurchase } from '@/lib/fbq'
 import { DEFAULT_WHATSAPP, waMeUrl } from '@/lib/phone'
 
 export default function OrderConfirmationPage() {
@@ -52,12 +52,26 @@ export default function OrderConfirmationPage() {
 
   useEffect(() => {
     if (!order || purchaseTracked) return
-    fbq('track', 'Purchase', {
-      value: order.total_amount,
-      currency: 'TND',
-    })
-    setPurchaseTracked(true)
-  }, [order, purchaseTracked])
+    let cancelled = false
+    ;(async () => {
+      const ok = await trackPurchase({
+        orderId: order.id,
+        value: order.total_amount,
+        currency: 'TND',
+        contentIds: items.map(i => i.product_id).filter(Boolean) as string[],
+        contents: items.map(i => ({
+          id: i.product_id || i.product_name,
+          quantity: i.quantity,
+          item_price: i.unit_price,
+        })),
+        numItems: items.reduce((s, i) => s + i.quantity, 0),
+      })
+      if (!cancelled && ok) setPurchaseTracked(true)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [order, items, purchaseTracked])
 
   if (loading) {
     return (

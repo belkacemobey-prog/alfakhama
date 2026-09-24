@@ -30,6 +30,7 @@ import {
   productDisplayName,
   stockLabelForLocale,
 } from '@/lib/store-i18n'
+import { trackPurchase } from '@/lib/fbq'
 
 export default function ProductDetailPage() {
   const params = useParams()
@@ -190,6 +191,15 @@ export default function ProductDetailPage() {
         selected_options: selectedOptions || {},
       })
       if (itemsError) throw itemsError
+
+      await trackPurchase({
+        orderId: order.id,
+        value: total,
+        currency: 'TND',
+        contentIds: [product.id],
+        contents: [{ id: product.id, quantity, item_price: product.price }],
+        numItems: quantity,
+      })
 
       router.push(`/order-confirmation/${order.id}`)
     } catch (err) {

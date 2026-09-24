@@ -17,6 +17,7 @@ import { ShoppingCart, User, MapPin, CreditCard, Truck, CheckCircle, Loader2 } f
 import Link from 'next/link'
 import { useStoreLanguage } from '@/components/store/StoreLanguageProvider'
 import { productDisplayName } from '@/lib/store-i18n'
+import { trackInitiateCheckout, trackPurchase } from '@/lib/fbq'
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -63,6 +64,17 @@ export default function CheckoutPage() {
       cancelled = true
     }
   }, [t])
+
+  useEffect(() => {
+    if (items.length === 0) return
+    void trackInitiateCheckout({
+      value: total,
+      currency: 'TND',
+      numItems: items.reduce((s, i) => s + i.quantity, 0),
+      contentIds: items.map(i => i.product.id),
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire once when checkout opens with cart
+  }, [])
 
   if (items.length === 0) {
     return (
@@ -130,6 +142,19 @@ export default function CheckoutPage() {
 
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
       if (itemsError) throw itemsError
+
+      await trackPurchase({
+        orderId: order.id,
+        value: total,
+        currency: 'TND',
+        contentIds: items.map(i => i.product.id),
+        contents: items.map(i => ({
+          id: i.product.id,
+          quantity: i.quantity,
+          item_price: i.product.price,
+        })),
+        numItems: items.reduce((s, i) => s + i.quantity, 0),
+      })
 
       clearCart()
       router.push(`/order-confirmation/${order.id}`)

@@ -34,6 +34,12 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       locale: 'fr_TN',
       siteName: 'AL FAKHAMA STORE',
+      images: [{ url: '/logo-alfakhama.png', width: 512, height: 512, alt: 'AL FAKHAMA STORE' }],
+    },
+    icons: {
+      icon: [{ url: '/logo-alfakhama.png', type: 'image/png' }],
+      apple: [{ url: '/logo-alfakhama.png', type: 'image/png' }],
+      shortcut: '/logo-alfakhama.png',
     },
     ...(domainVerification
       ? {
